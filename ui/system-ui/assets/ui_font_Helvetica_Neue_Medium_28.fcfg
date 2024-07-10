@@ -1,0 +1,16 @@
+{
+  "codename": "Helvetica_Neue_Medium_28",
+  "ttf_path": "/assets/HelveticaNeueMedium.otf",
+  "bin_path": "/assets/ui_font_Helvetica_Neue_Medium_28.bin",
+  "c_path": "/assets/ui_font_Helvetica_Neue_Medium_28.c",
+  "cfg_path": "/assets/ui_font_Helvetica_Neue_Medium_28.fcfg",
+  "size": 28,
+  "bpp": 1,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}

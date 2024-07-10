@@ -1,0 +1,16 @@
+{
+  "codename": "Helvetica_Neue_Black",
+  "ttf_path": "/assets/HelveticaNeueBlack.otf",
+  "bin_path": "/assets/ui_font_Helvetica_Neue_Black.bin",
+  "c_path": "/assets/ui_font_Helvetica_Neue_Black.c",
+  "cfg_path": "/assets/ui_font_Helvetica_Neue_Black.fcfg",
+  "size": 16,
+  "bpp": 1,
+  "letters": 0,
+  "ranges": [
+    "0x20-0x7f"
+  ],
+  "symbols": "",
+  "customparams": "--no-compress --no-prefilter",
+  "uploaded": false
+}
