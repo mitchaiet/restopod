@@ -3,21 +3,9 @@ import framebuf
 import time
 import math
 
-Vbat_Pin = 29
-
 # Pin definition
-I2C_SDA = 6
-I2C_SDL = 7
-I2C_INT = 17
-I2C_RST = 16
-
-DC = 8
-CS = 9
-SCK = 10
-MOSI = 11
-MISO = 12
-RST = 13
-
+I2C_SDA, I2C_SCL, I2C_INT, I2C_RST = 6, 7, 17, 16
+DC, CS, SCK, MOSI, MISO, RST = 8, 9, 10, 11, 12, 13
 BL = 25
 
 DEBOUNCE_TIME = 300  # milliseconds
@@ -26,12 +14,8 @@ SCROLL_THRESHOLD = 20  # pixels
 # LCD Driver
 class LCD_1inch28(framebuf.FrameBuffer):
     def __init__(self):
-        self.width = 240
-        self.height = 240
-        
-        self.cs = Pin(CS, Pin.OUT)
-        self.rst = Pin(RST, Pin.OUT)
-        
+        self.width, self.height = 240, 240
+        self.cs, self.rst = Pin(CS, Pin.OUT), Pin(RST, Pin.OUT)
         self.cs(1)
         self.spi = SPI(1, 100_000_000, polarity=0, phase=0, bits=8, sck=Pin(SCK), mosi=Pin(MOSI), miso=None)
         self.dc = Pin(DC, Pin.OUT)
@@ -41,15 +25,10 @@ class LCD_1inch28(framebuf.FrameBuffer):
         self.init_display()
         
         # Define color, Micropython fixed to BRG format
-        self.red = 0x07E0
-        self.green = 0x001f
-        self.blue = 0xf800
-        self.white = 0xffff
-        self.black = 0x0000
-        self.brown = 0x8430
-        self.gray = 0xC618
-        self.light_gray = 0xDEFB
-        self.dark_gray = 0x6B4D
+        self.red, self.green, self.blue = 0x07E0, 0x001f, 0xf800
+        self.white, self.black = 0xffff, 0x0000
+        self.brown, self.gray = 0x8430, 0xC618
+        self.light_gray, self.dark_gray = 0xDEFB, 0x6B4D
         
         self.fill(self.white)  # Clear screen
         self.show()  # Show
@@ -82,241 +61,33 @@ class LCD_1inch28(framebuf.FrameBuffer):
         self.rst(1)
         time.sleep(0.05)
         
-        self.write_cmd(0xEF)
-        self.write_cmd(0xEB)
-        self.write_data(0x14) 
+        cmds = [
+            (0xEF, None), (0xEB, 0x14), (0xFE, None), (0xEF, None), (0xEB, 0x14),
+            (0x84, 0x40), (0x85, 0xFF), (0x86, 0xFF), (0x87, 0xFF), (0x88, 0x0A),
+            (0x89, 0x21), (0x8A, 0x00), (0x8B, 0x80), (0x8C, 0x01), (0x8D, 0x01),
+            (0x8E, 0xFF), (0x8F, 0xFF), (0xB6, [0x00, 0x20]), (0x36, 0x98), (0x3A, 0x05),
+            (0x90, [0x08, 0x08, 0x08, 0x08]), (0xBD, 0x06), (0xBC, 0x00), (0xFF, [0x60, 0x01, 0x04]),
+            (0xC3, 0x13), (0xC4, 0x13), (0xC9, 0x22), (0xBE, 0x11), (0xE1, [0x10, 0x0E]),
+            (0xDF, [0x21, 0x0c, 0x02]), (0xF0, [0x45, 0x09, 0x08, 0x08, 0x26, 0x2A]),
+            (0xF1, [0x43, 0x70, 0x72, 0x36, 0x37, 0x6F]), (0xF2, [0x45, 0x09, 0x08, 0x08, 0x26, 0x2A]),
+            (0xF3, [0x43, 0x70, 0x72, 0x36, 0x37, 0x6F]), (0xED, [0x1B, 0x0B]), (0xAE, 0x77),
+            (0xCD, 0x63), (0x70, [0x07, 0x07, 0x04, 0x0E, 0x0F, 0x09, 0x07, 0x08, 0x03]),
+            (0xE8, 0x34), (0x62, [0x18, 0x0D, 0x71, 0xED, 0x70, 0x70, 0x18, 0x0F, 0x71, 0xEF, 0x70, 0x70]),
+            (0x63, [0x18, 0x11, 0x71, 0xF1, 0x70, 0x70, 0x18, 0x13, 0x71, 0xF3, 0x70, 0x70]),
+            (0x64, [0x28, 0x29, 0xF1, 0x01, 0xF1, 0x00, 0x07]), (0x66, [0x3C, 0x00, 0xCD, 0x67, 0x45, 0x45, 0x10, 0x00, 0x00, 0x00]),
+            (0x67, [0x00, 0x3C, 0x00, 0x00, 0x00, 0x01, 0x54, 0x10, 0x32, 0x98]), (0x74, [0x10, 0x85, 0x80, 0x00, 0x00, 0x4E, 0x00]),
+            (0x98, [0x3e, 0x07]), (0x35, None), (0x21, None), (0x11, None), (0x29, None)
+        ]
         
-        self.write_cmd(0xFE) 
-        self.write_cmd(0xEF) 
-
-        self.write_cmd(0xEB)
-        self.write_data(0x14) 
-
-        self.write_cmd(0x84)
-        self.write_data(0x40) 
-
-        self.write_cmd(0x85)
-        self.write_data(0xFF) 
-
-        self.write_cmd(0x86)
-        self.write_data(0xFF) 
-
-        self.write_cmd(0x87)
-        self.write_data(0xFF)
-
-        self.write_cmd(0x88)
-        self.write_data(0x0A)
-
-        self.write_cmd(0x89)
-        self.write_data(0x21) 
-
-        self.write_cmd(0x8A)
-        self.write_data(0x00) 
-
-        self.write_cmd(0x8B)
-        self.write_data(0x80) 
-
-        self.write_cmd(0x8C)
-        self.write_data(0x01) 
-
-        self.write_cmd(0x8D)
-        self.write_data(0x01) 
-
-        self.write_cmd(0x8E)
-        self.write_data(0xFF) 
-
-        self.write_cmd(0x8F)
-        self.write_data(0xFF) 
-
-
-        self.write_cmd(0xB6)
-        self.write_data(0x00)
-        self.write_data(0x20)
-
-        self.write_cmd(0x36)
-        self.write_data(0x98)
-
-        self.write_cmd(0x3A)
-        self.write_data(0x05) 
-
-
-        self.write_cmd(0x90)
-        self.write_data(0x08)
-        self.write_data(0x08)
-        self.write_data(0x08)
-        self.write_data(0x08) 
-
-        self.write_cmd(0xBD)
-        self.write_data(0x06)
-        
-        self.write_cmd(0xBC)
-        self.write_data(0x00)
-
-        self.write_cmd(0xFF)
-        self.write_data(0x60)
-        self.write_data(0x01)
-        self.write_data(0x04)
-
-        self.write_cmd(0xC3)
-        self.write_data(0x13)
-        self.write_cmd(0xC4)
-        self.write_data(0x13)
-
-        self.write_cmd(0xC9)
-        self.write_data(0x22)
-
-        self.write_cmd(0xBE)
-        self.write_data(0x11) 
-
-        self.write_cmd(0xE1)
-        self.write_data(0x10)
-        self.write_data(0x0E)
-
-        self.write_cmd(0xDF)
-        self.write_data(0x21)
-        self.write_data(0x0c)
-        self.write_data(0x02)
-
-        self.write_cmd(0xF0)   
-        self.write_data(0x45)
-        self.write_data(0x09)
-        self.write_data(0x08)
-        self.write_data(0x08)
-        self.write_data(0x26)
-        self.write_data(0x2A)
-
-        self.write_cmd(0xF1)    
-        self.write_data(0x43)
-        self.write_data(0x70)
-        self.write_data(0x72)
-        self.write_data(0x36)
-        self.write_data(0x37)  
-        self.write_data(0x6F)
-
-
-        self.write_cmd(0xF2)   
-        self.write_data(0x45)
-        self.write_data(0x09)
-        self.write_data(0x08)
-        self.write_data(0x08)
-        self.write_data(0x26)
-        self.write_data(0x2A)
-
-        self.write_cmd(0xF3)   
-        self.write_data(0x43)
-        self.write_data(0x70)
-        self.write_data(0x72)
-        self.write_data(0x36)
-        self.write_data(0x37) 
-        self.write_data(0x6F)
-
-        self.write_cmd(0xED)
-        self.write_data(0x1B) 
-        self.write_data(0x0B) 
-
-        self.write_cmd(0xAE)
-        self.write_data(0x77)
-        
-        self.write_cmd(0xCD)
-        self.write_data(0x63)
-
-
-        self.write_cmd(0x70)
-        self.write_data(0x07)
-        self.write_data(0x07)
-        self.write_data(0x04)
-        self.write_data(0x0E) 
-        self.write_data(0x0F) 
-        self.write_data(0x09)
-        self.write_data(0x07)
-        self.write_data(0x08)
-        self.write_data(0x03)
-
-        self.write_cmd(0xE8)
-        self.write_data(0x34)
-
-        self.write_cmd(0x62)
-        self.write_data(0x18)
-        self.write_data(0x0D)
-        self.write_data(0x71)
-        self.write_data(0xED)
-        self.write_data(0x70) 
-        self.write_data(0x70)
-        self.write_data(0x18)
-        self.write_data(0x0F)
-        self.write_data(0x71)
-        self.write_data(0xEF)
-        self.write_data(0x70) 
-        self.write_data(0x70)
-
-        self.write_cmd(0x63)
-        self.write_data(0x18)
-        self.write_data(0x11)
-        self.write_data(0x71)
-        self.write_data(0xF1)
-        self.write_data(0x70) 
-        self.write_data(0x70)
-        self.write_data(0x18)
-        self.write_data(0x13)
-        self.write_data(0x71)
-        self.write_data(0xF3)
-        self.write_data(0x70) 
-        self.write_data(0x70)
-
-        self.write_cmd(0x64)
-        self.write_data(0x28)
-        self.write_data(0x29)
-        self.write_data(0xF1)
-        self.write_data(0x01)
-        self.write_data(0xF1)
-        self.write_data(0x00)
-        self.write_data(0x07)
-
-        self.write_cmd(0x66)
-        self.write_data(0x3C)
-        self.write_data(0x00)
-        self.write_data(0xCD)
-        self.write_data(0x67)
-        self.write_data(0x45)
-        self.write_data(0x45)
-        self.write_data(0x10)
-        self.write_data(0x00)
-        self.write_data(0x00)
-        self.write_data(0x00)
-
-        self.write_cmd(0x67)
-        self.write_data(0x00)
-        self.write_data(0x3C)
-        self.write_data(0x00)
-        self.write_data(0x00)
-        self.write_data(0x00)
-        self.write_data(0x01)
-        self.write_data(0x54)
-        self.write_data(0x10)
-        self.write_data(0x32)
-        self.write_data(0x98)
-
-        self.write_cmd(0x74)
-        self.write_data(0x10)
-        self.write_data(0x85)
-        self.write_data(0x80)
-        self.write_data(0x00) 
-        self.write_data(0x00) 
-        self.write_data(0x4E)
-        self.write_data(0x00)
-        
-        self.write_cmd(0x98)
-        self.write_data(0x3e)
-        self.write_data(0x07)
-
-        self.write_cmd(0x35)
-        self.write_cmd(0x21)
-
-        self.write_cmd(0x11)
-
-        self.write_cmd(0x29)
+        for cmd, data in cmds:
+            self.write_cmd(cmd)
+            if data:
+                if isinstance(data, list):
+                    for d in data:
+                        self.write_data(d)
+                else:
+                    self.write_data(data)
     
-    # 设置窗口
     def setWindows(self, Xstart, Ystart, Xend, Yend): 
         self.write_cmd(0x2A)
         self.write_data(0x00)
@@ -332,57 +103,30 @@ class LCD_1inch28(framebuf.FrameBuffer):
         
         self.write_cmd(0x2C)
      
-    # Show
     def show(self): 
         self.setWindows(0, 0, self.width, self.height)
-        
         self.cs(1)
         self.dc(1)
         self.cs(0)
         self.spi.write(self.buffer)
         self.cs(1)
         
-    # Write characters, size is the font size, the minimum is 1
     def write_text(self, text, x, y, size, color):
-        ''' Method to write Text on OLED/LCD Displays
-            with a variable font size
-
-            Args:
-                text: the string of chars to be displayed
-                x: x co-ordinate of starting position
-                y: y co-ordinate of starting position
-                size: font size of text
-                color: color of text to be displayed
-        '''
         background = self.pixel(x, y)
         info = []
-        # Creating reference charaters to read their values
         self.text(text, x, y, color)
         for i in range(x, x + (8 * len(text))):
             for j in range(y, y + 8):
-                # Fetching amd saving details of pixels, such as
-                # x co-ordinate, y co-ordinate, and color of the pixel
                 px_color = self.pixel(i, j)
-                info.append((i, j, px_color)) if px_color == color else None
-        # Clearing the reference characters from the screen
+                if px_color == color:
+                    info.append((i, j, px_color))
         self.text(text, x, y, background)
-        # Writing the custom-sized font characters on screen
         for px_info in info:
             self.fill_rect(size * px_info[0] - (size - 1) * x, size * px_info[1] - (size - 1) * y, size, size, px_info[2]) 
 
     def circle(self, x0, y0, radius, color, fill=False):
-        ''' Draws a circle on the screen.
-            Args:
-                x0, y0: Center of the circle
-                radius: Radius of the circle
-                color: Color of the circle
-                fill: Whether to fill the circle
-        '''
-        f = 1 - radius
-        ddF_x = 1
-        ddF_y = -2 * radius
-        x = 0
-        y = radius
+        f, ddF_x, ddF_y = 1 - radius, 1, -2 * radius
+        x, y = 0, radius
 
         self.pixel(x0, y0 + radius, color)
         self.pixel(x0, y0 - radius, color)
@@ -416,20 +160,17 @@ class LCD_1inch28(framebuf.FrameBuffer):
                     self.pixel(i, y0 - x, color)
 
 # Touch driver
-class Touch_CST816T(object):
-    # Initialize the touch chip
+class Touch_CST816T:
     def __init__(self, address=0x15, mode=0, i2c_num=1, i2c_sda=6, i2c_scl=7, int_pin=21, rst_pin=22, LCD=None):
-        self._bus = I2C(id=i2c_num, scl=Pin(i2c_scl), sda=Pin(i2c_sda), freq=400_000)  # Initialize I2C
-        self._address = address  # Set slave address
-        self.int = Pin(int_pin, Pin.IN, Pin.PULL_UP)     
-        self.tim = Timer()     
+        self._bus = I2C(id=i2c_num, scl=Pin(i2c_scl), sda=Pin(i2c_sda), freq=400_000)
+        self._address = address
+        self.int = Pin(int_pin, Pin.IN, Pin.PULL_UP)
+        self.tim = Timer()
         self.rst = Pin(rst_pin, Pin.OUT)
         self.Reset()
-        bRet = self.WhoAmI()
-        if bRet:
+        if self.WhoAmI():
             print("Success: Detected CST816T.")
-            Rev = self.Read_Revision()
-            print("CST816T Revision = {}".format(Rev))
+            print(f"CST816T Revision = {self.Read_Revision()}")
             self.Stop_Sleep()
         else:
             print("Error: Not Detected CST816T.")
@@ -439,64 +180,41 @@ class Touch_CST816T(object):
         self.Flag = self.Flgh = self.l = 0
         self.X_point = self.Y_point = 0
         self.int.irq(handler=self.Int_Callback, trigger=Pin.IRQ_FALLING)
-        self.last_x = 0
-        self.last_y = 0
-        self.last_time = 0
+        self.last_x = self.last_y = self.last_time = 0
       
     def _read_byte(self, cmd):
-        rec = self._bus.readfrom_mem(int(self._address), int(cmd), 1)
-        return rec[0]
+        return self._bus.readfrom_mem(int(self._address), int(cmd), 1)[0]
     
     def _read_block(self, reg, length=1):
-        rec = self._bus.readfrom_mem(int(self._address), int(reg), length)
-        return rec
+        return self._bus.readfrom_mem(int(self._address), int(reg), length)
     
     def _write_byte(self, cmd, val):
         self._bus.writeto_mem(int(self._address), int(cmd), bytes([int(val)]))
 
     def WhoAmI(self):
-        if (0xB5) != self._read_byte(0xA7):
-            return False
-        return True
+        return self._read_byte(0xA7) == 0xB5
     
     def Read_Revision(self):
         return self._read_byte(0xA9)
       
-    # Stop sleeping
     def Stop_Sleep(self):
         self._write_byte(0xFE, 0x01)
     
-    # Reset    
     def Reset(self):
         self.rst(0)
         time.sleep_ms(1)
         self.rst(1)
         time.sleep_ms(50)
     
-    # Set mode   
     def Set_Mode(self, mode, callback_time=10, rest_time=5): 
-        # mode = 0 gestures mode 
-        # mode = 1 point mode 
-        # mode = 2 mixed mode 
-        if (mode == 1):      
-            self._write_byte(0xFA, 0X41)
-            
-        elif (mode == 2):
-            self._write_byte(0xFA, 0X71)
-            
-        else:
-            self._write_byte(0xFA, 0X11)
-            self._write_byte(0xEC, 0X01)
+        modes = {0: [0xFA, 0X11, 0xEC, 0X01], 1: [0xFA, 0X41], 2: [0xFA, 0X71]}
+        for cmd in modes.get(mode, []):
+            self._write_byte(cmd, modes[mode][1])
      
-    # Get the coordinates of the touch
     def get_point(self):
         xy_point = self._read_block(0x03, 4)
-        
-        x_point = ((xy_point[0] & 0x0f) << 8) + xy_point[1]
-        y_point = ((xy_point[2] & 0x0f) << 8) + xy_point[3]
-        
-        self.X_point = x_point
-        self.Y_point = y_point
+        self.X_point = ((xy_point[0] & 0x0f) << 8) + xy_point[1]
+        self.Y_point = ((xy_point[2] & 0x0f) << 8) + xy_point[3]
         
     def Int_Callback(self, pin):
         current_time = time.ticks_ms()
@@ -506,7 +224,6 @@ class Touch_CST816T(object):
         self.last_time = current_time
         if self.Mode == 0:
             self.Gestures = self._read_byte(0x01)
-
         elif self.Mode == 1:           
             self.Flag = 1
             self.get_point()
@@ -515,83 +232,6 @@ class Touch_CST816T(object):
         self.l += 1
         if self.l > 100:
             self.l = 50
-
-class QMI8658(object):
-    def __init__(self, address=0X6B):
-        self._address = address
-        self._bus = I2C(id=1, scl=Pin(I2C_SDL), sda=Pin(I2C_SDA), freq=100_000)
-        bRet = self.WhoAmI()
-        if bRet:
-            self.Read_Revision()
-        else:
-            return None
-        self.Config_apply()
-
-    def _read_byte(self, cmd):
-        rec = self._bus.readfrom_mem(int(self._address), int(cmd), 1)
-        return rec[0]
-    
-    def _read_block(self, reg, length=1):
-        rec = self._bus.readfrom_mem(int(self._address), int(reg), length)
-        return rec
-    
-    def _read_u16(self, cmd):
-        LSB = self._bus.readfrom_mem(int(self._address), int(cmd), 1)
-        MSB = self._bus.readfrom_mem(int(self._address), int(cmd) + 1, 1)
-        return (MSB[0] << 8) + LSB[0]
-    
-    def _write_byte(self, cmd, val):
-        self._bus.writeto_mem(int(self._address), int(cmd), bytes([int(val)]))
-        
-    def WhoAmI(self):
-        bRet = False
-        if (0x05) == self._read_byte(0x00):
-            bRet = True
-        return bRet
-    
-    def Read_Revision(self):
-        return self._read_byte(0x01)
-    
-    def Config_apply(self):
-        # REG CTRL1
-        self._write_byte(0x02, 0x60)
-        # REG CTRL2 : QMI8658AccRange_8g  and QMI8658AccOdr_1000Hz
-        self._write_byte(0x03, 0x23)
-        # REG CTRL3 : QMI8658GyrRange_512dps and QMI8658GyrOdr_1000Hz
-        self._write_byte(0x04, 0x53)
-        # REG CTRL4 : No
-        self._write_byte(0x05, 0x00)
-        # REG CTRL5 : Enable Gyroscope And Accelerometer Low-Pass Filter 
-        self._write_byte(0x06, 0x11)
-        # REG CTRL6 : Disables Motion on Demand.
-        self._write_byte(0x07, 0x00)
-        # REG CTRL7 : Enable Gyroscope And Accelerometer
-        self._write_byte(0x08, 0x03)
-
-    def Read_Raw_XYZ(self):
-        xyz = [0, 0, 0, 0, 0, 0]
-        raw_timestamp = self._read_block(0x30, 3)
-        raw_acc_xyz = self._read_block(0x35, 6)
-        raw_gyro_xyz = self._read_block(0x3b, 6)
-        raw_xyz = self._read_block(0x35, 12)
-        timestamp = (raw_timestamp[2] << 16) | (raw_timestamp[1] << 8) | (raw_timestamp[0])
-        for i in range(6):
-            xyz[i] = (raw_xyz[(i * 2) + 1] << 8) | (raw_xyz[i * 2])
-            if xyz[i] >= 32767:
-                xyz[i] = xyz[i] - 65535
-        return xyz
-    
-    def Read_XYZ(self):
-        xyz = [0, 0, 0, 0, 0, 0]
-        raw_xyz = self.Read_Raw_XYZ()  
-        # QMI8658AccRange_8g
-        acc_lsb_div = (1 << 12)
-        # QMI8658GyrRange_512dps
-        gyro_lsb_div = 64
-        for i in range(3):
-            xyz[i] = raw_xyz[i] / acc_lsb_div
-            xyz[i + 3] = raw_xyz[i + 3] * 1.0 / gyro_lsb_div
-        return xyz
 
 # Draw the click wheel interface
 def draw_click_wheel():
@@ -619,8 +259,7 @@ def draw_click_wheel():
 # Detect scrolling direction
 def detect_scrolling(x, y):
     global last_angle
-    dx = x - 120
-    dy = y - 120
+    dx, dy = x - 120, y - 120
     if dx == 0 and dy == 0:
         return
     
